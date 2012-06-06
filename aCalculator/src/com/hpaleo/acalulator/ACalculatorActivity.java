@@ -23,6 +23,7 @@ public class ACalculatorActivity extends Activity {
 	
 	private double value1, value2, res;	
 	private final int NULL = -1, ADD = 0, SUB = 1, DIV = 2, MUL = 3, SIGN = 4;
+	private boolean tokenOp;
 	private int operator;
 	
 	private void initVals() {
@@ -65,7 +66,9 @@ public class ACalculatorActivity extends Activity {
 		message = Toast.makeText(getApplicationContext(), "", Toast.LENGTH_SHORT);
 		
 		value1 = value2 = 0;
-		operator = ADD;
+		setOperation(NULL);
+		
+		tokenOp = true;	// Determines if there is the need to clean EditValue
 	}
 	
     /** Called when the activity is first created. */
@@ -83,6 +86,8 @@ public class ACalculatorActivity extends Activity {
         		editValue.setText("0");
         		editValue.setSelection(editValue.length());
         		setOperation(NULL);
+        		tokenOp = true;
+        		value1 = value2 = res = 0;
         	}
         });
         
@@ -97,83 +102,60 @@ public class ACalculatorActivity extends Activity {
         				if (btnNumbers[ii].getText().toString().equals("0")) {
         					return;	// Exit operation 'cause we are clicking "0" when there's alredy a "0"
         				}
-        				
-        				editValue.setText(btnNumbers[ii].getText().toString());	// Replace content of EditValue
-        				editValue.setSelection(editValue.length());				// Set selection at the last position of EditValue
-        				//editFormula.setText(editValue.getText().toString());	// Set content of EditFormula by the same content of EditValue
-        				return;													// Exit operation 
         			}
         			
-        			if (editFormula.length() > 0 && !editValue.getText().toString().equals("0")) {
-        				editValue.setText(btnNumbers[ii].getText().toString());	// Replace content of EditValue
+        			if (tokenOp) {
+        				editValue.setText(btnNumbers[ii].getText().toString());
         				editValue.setSelection(editValue.length());				// Set selection at the last position of EditValue
+        				
+        				// Verify if pressed button was "0"
+        				if (btnNumbers[ii].getText().toString().equals("0")) {
+        					tokenOp = true;
+        					return;	// Exit operation 'cause we are clicking "0" when there's alredy a "0"
+        				}       				
+        				
+        				tokenOp = false;
         				return;
         			}
-        			// When there's alredy another value on EditValue
         			
-        			editValue.setText(editValue.getText().toString() + btnNumbers[ii].getText());
-        			editValue.setSelection(editValue.length());
-        			//editFormula.setText(editFormula.getText().toString() + btnNumbers[ii].getText().toString());
+        			editValue.setText(editValue.getText().toString() + btnNumbers[ii].getText().toString());
+        			editValue.setSelection(editValue.length());				// Set selection at the last position of EditValue
         		}
         	});
         }  
         
         btnAdd.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				operator = ADD;
+				setOperation(ADD);
+				tokenOp	= true;				
+				value1	+= Double.parseDouble(editValue.getText().toString());
 				
-				if (editValue.getText().toString().equals("0")) {
-					value1 = 0;
-					editFormula.setText("0 + ");
-					return;
-				}
-				
-				if (editFormula.length() == 0) {
-					value1 = Double.parseDouble(editValue.getText().toString());	// Set value1 to the value into EditVal
-					editFormula.setText(editValue.getText().toString() + " + ");	// Set content of EditFormula by the same content of EditValue
-					//editValue.setText("0");											// Reset content of EditValue
-					editValue.setSelection(editValue.length());						// Set selection at the last position of EditValue
-					return;															// Exit operation
-				}
-								
-				value1 += Double.parseDouble(editValue.getText().toString());
 				editFormula.setText(editFormula.getText().toString() + editValue.getText().toString() + " + ");
 				editValue.setText(value1 + "");
 				editValue.setSelection(editValue.length());
-				
-				/*if (editValue.getText().toString().equals("0")) {
-					return;
-				}*/
-				
-				/*if (editValue.getText().equals("0")) {
-					message.setText("Type a value before an operation");
-					message.show();
-					return;
-				}
-				
-				if (editValue.length() > 0) {
-					value1 += Double.parseDouble(editValue.getText().toString());
-					editFormula.setText(editValue.getText().toString() + " + ");
-					editValue.setText("");					
-					return;
-				}*/
 			}     	
         });
         
         btnEqual.setOnClickListener(new OnClickListener() {
         	public void onClick(View v) {
-        		value2 = Double.parseDouble(editValue.getText().toString());
         		
-        		if (operator == ADD) {
-        			res = value1 + value2;
+        		if (getOperation() == ADD) {
+        			value1 += Double.parseDouble(editValue.getText().toString());
         		}
         		
-        		editFormula.setText(res + "");
+        		editFormula.setText("");
+        		editValue.setText(value1 + "");
+        		editValue.setSelection(editValue.length());
+        		tokenOp = true;
         	}
         });
     }
     
     private void setOperation(int operator) {
     	this.operator = operator;
+    }
+    
+    private int getOperation() {
+    	return this.operator;
     }
 }
